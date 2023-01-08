@@ -1534,7 +1534,8 @@
                     "id": "GenericIssueErrorType",
                     "type": "string",
                     "enum": [
-                        "CrossOriginPortalPostMessageError"
+                        "CrossOriginPortalPostMessageError",
+                        "FormLabelForNameError"
                     ]
                 },
                 {
@@ -1551,6 +1552,11 @@
                             "name": "frameId",
                             "optional": true,
                             "$ref": "Page.FrameId"
+                        },
+                        {
+                            "name": "violatingNodeId",
+                            "optional": true,
+                            "$ref": "DOM.BackendNodeId"
                         }
                     ]
                 },
@@ -1660,14 +1666,15 @@
                     "enum": [
                         "ShouldEmbargo",
                         "TooManyRequests",
-                        "ManifestListHttpNotFound",
-                        "ManifestListNoResponse",
-                        "ManifestListInvalidResponse",
-                        "ManifestNotInManifestList",
-                        "ManifestListTooBig",
-                        "ManifestHttpNotFound",
-                        "ManifestNoResponse",
-                        "ManifestInvalidResponse",
+                        "WellKnownHttpNotFound",
+                        "WellKnownNoResponse",
+                        "WellKnownInvalidResponse",
+                        "WellKnownListEmpty",
+                        "ConfigNotInWellKnown",
+                        "WellKnownTooBig",
+                        "ConfigHttpNotFound",
+                        "ConfigNoResponse",
+                        "ConfigInvalidResponse",
                         "ClientMetadataHttpNotFound",
                         "ClientMetadataNoResponse",
                         "ClientMetadataInvalidResponse",
@@ -1677,6 +1684,7 @@
                         "AccountsHttpNotFound",
                         "AccountsNoResponse",
                         "AccountsInvalidResponse",
+                        "AccountsListEmpty",
                         "IdTokenHttpNotFound",
                         "IdTokenNoResponse",
                         "IdTokenInvalidResponse",
@@ -2169,6 +2177,7 @@
                         "protectedMediaIdentifier",
                         "sensors",
                         "storageAccess",
+                        "topLevelStorageAccess",
                         "videoCapture",
                         "videoCapturePanTiltZoom",
                         "wakeLockScreen",
@@ -2182,7 +2191,8 @@
                     "type": "string",
                     "enum": [
                         "granted",
-                        "denied"
+                        "denied",
+                        "prompt"
                     ]
                 },
                 {
@@ -8059,7 +8069,6 @@
                     "type": "string",
                     "enum": [
                         "avif",
-                        "jxl",
                         "webp"
                     ]
                 }
@@ -12783,7 +12792,8 @@
                 },
                 {
                     "name": "getAllCookies",
-                    "description": "Returns all browser cookies. Depending on the backend support, will return detailed cookie\ninformation in the `cookies` field.",
+                    "description": "Returns all browser cookies. Depending on the backend support, will return detailed cookie\ninformation in the `cookies` field.\nDeprecated. Use Storage.getCookies instead.",
+                    "deprecated": true,
                     "returns": [
                         {
                             "name": "cookies",
@@ -13932,6 +13942,7 @@
                                 "ResourceExhausted",
                                 "AlreadyExists",
                                 "Unavailable",
+                                "Unauthorized",
                                 "BadResponse",
                                 "InternalError",
                                 "UnknownError",
@@ -15365,12 +15376,15 @@
                         "otp-credentials",
                         "payment",
                         "picture-in-picture",
+                        "private-aggregation",
                         "publickey-credentials-get",
                         "run-ad-auction",
                         "screen-wake-lock",
                         "serial",
                         "shared-autofill",
                         "shared-storage",
+                        "shared-storage-select-url",
+                        "smart-card",
                         "storage-access",
                         "sync-xhr",
                         "trust-token-redemption",
@@ -16292,7 +16306,9 @@
                         "InjectedJavascript",
                         "InjectedStyleSheet",
                         "KeepaliveRequest",
+                        "IndexedDBEvent",
                         "Dummy",
+                        "AuthorizationHeader",
                         "ContentSecurityHandler",
                         "ContentWebAuthenticationAPI",
                         "ContentFileChooser",
@@ -16430,7 +16446,12 @@
                         "SameSiteCrossOriginNavigation",
                         "SameSiteCrossOriginRedirectNotOptIn",
                         "SameSiteCrossOriginNavigationNotOptIn",
-                        "ActivationNavigationParameterMismatch"
+                        "ActivationNavigationParameterMismatch",
+                        "ActivatedInBackground",
+                        "EmbedderHostDisallowed",
+                        "ActivationNavigationDestroyedBeforeSuccess",
+                        "TabClosedByUserGesture",
+                        "TabClosedWithoutUserGesture"
                     ]
                 }
             ],
@@ -19192,6 +19213,7 @@
                         "join",
                         "leave",
                         "update",
+                        "loaded",
                         "bid",
                         "win"
                     ]
@@ -19824,6 +19846,17 @@
                     ]
                 },
                 {
+                    "name": "resetSharedStorageBudget",
+                    "description": "Resets the budget for `ownerOrigin` by clearing all budget withdrawals.",
+                    "experimental": true,
+                    "parameters": [
+                        {
+                            "name": "ownerOrigin",
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
                     "name": "setSharedStorageTracking",
                     "description": "Enables/disables issuing of sharedStorageAccessed events.",
                     "experimental": true,
@@ -20249,6 +20282,22 @@
                     ]
                 },
                 {
+                    "name": "getFeatureState",
+                    "description": "Returns information about the feature state.",
+                    "parameters": [
+                        {
+                            "name": "featureState",
+                            "type": "string"
+                        }
+                    ],
+                    "returns": [
+                        {
+                            "name": "featureEnabled",
+                            "type": "boolean"
+                        }
+                    ]
+                },
+                {
                     "name": "getProcessInfo",
                     "description": "Returns information about all running processes.",
                     "returns": [
@@ -20562,6 +20611,13 @@
                         {
                             "name": "background",
                             "description": "Whether to create the target in background or foreground (chrome-only,\nfalse by default).",
+                            "optional": true,
+                            "type": "boolean"
+                        },
+                        {
+                            "name": "forTab",
+                            "description": "Whether to create the target of type \"tab\".",
+                            "experimental": true,
                             "optional": true,
                             "type": "boolean"
                         }
@@ -21195,7 +21251,7 @@
                 },
                 {
                     "name": "dataCollected",
-                    "description": "Contains an bucket of collected trace events. When tracing is stopped collected events will be\nsend as a sequence of dataCollected events followed by tracingComplete event.",
+                    "description": "Contains a bucket of collected trace events. When tracing is stopped collected events will be\nsent as a sequence of dataCollected events followed by tracingComplete event.",
                     "parameters": [
                         {
                             "name": "value",
@@ -22464,6 +22520,36 @@
                         {
                             "name": "enabled",
                             "type": "boolean"
+                        }
+                    ]
+                }
+            ],
+            "events": [
+                {
+                    "name": "credentialAdded",
+                    "description": "Triggered when a credential is added to an authenticator.",
+                    "parameters": [
+                        {
+                            "name": "authenticatorId",
+                            "$ref": "AuthenticatorId"
+                        },
+                        {
+                            "name": "credential",
+                            "$ref": "Credential"
+                        }
+                    ]
+                },
+                {
+                    "name": "credentialAsserted",
+                    "description": "Triggered when a credential is used in a webauthn assertion.",
+                    "parameters": [
+                        {
+                            "name": "authenticatorId",
+                            "$ref": "AuthenticatorId"
+                        },
+                        {
+                            "name": "credential",
+                            "$ref": "Credential"
                         }
                     ]
                 }
